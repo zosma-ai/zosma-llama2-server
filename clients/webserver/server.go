@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/rampenke/zosma-llama-server/tasks"
 )
 
@@ -96,11 +97,16 @@ func main() {
 	inspector := asynq.NewInspector(conn)
 
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*", "https://zosma.mcntech.com"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
+
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 	e.POST("/api/query", func(c echo.Context) error {
-		err, res := ProcessQuery(c, client, inspector)
+		res, err := ProcessQuery(c, client, inspector)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
